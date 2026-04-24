@@ -26,7 +26,7 @@ body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #111; }
 
 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
 thead tr { background: #111318; }
-thead th { padding: 8px 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: #fff; text-align: left; }
+thead th { padding: 8px 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .6px; color: #fff; text-align: left; }
 thead th.r { text-align: right; }
 tbody tr { border-bottom: 1px solid #eee; }
 tbody tr:nth-child(even) { background: #fafafa; }
@@ -38,7 +38,7 @@ tfoot td { padding: 6px 10px; font-size: 11px; }
 .totals-table { width: 280px; }
 .totals-table td { padding: 4px 8px; font-size: 11px; }
 .totals-table .tl { color: #555; }
-.totals-table .tv { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.totals-table .tv { text-align: right; font-weight: normal; font-variant-numeric: tabular-nums; }
 .totals-table .grand td { font-size: 14px; font-weight: 700; border-top: 2px solid #111318; padding-top: 8px; }
 .gst-box { background: #f6f7fb; border: 1px solid #e2e5ed; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
 .gst-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
@@ -162,7 +162,7 @@ tfoot td { padding: 6px 10px; font-size: 11px; }
                         @else
                             <div class="gst-row"><span>IGST</span><span>{{ fmt_inr($invoice->total_igst) }}</span></div>
                         @endif
-                        <div class="gst-row" style="font-weight:600;border-top:1px solid #ddd;margin-top:4px;padding-top:4px;">
+                        <div class="gst-row" style="font-weight:bold;border-top:1px solid #ddd;margin-top:4px;padding-top:4px;">
                             <span>Total Tax</span><span>{{ fmt_inr($invoice->total_tax) }}</span>
                         </div>
                     </div>

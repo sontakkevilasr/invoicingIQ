@@ -7,6 +7,7 @@ use App\Models\InvoiceItem;
 use App\Models\Customer;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
@@ -34,7 +35,7 @@ class InvoiceController extends Controller
         if ($request->filled('from')) $query->where('invoice_date', '>=', $request->from);
         if ($request->filled('to'))   $query->where('invoice_date', '<=', $request->to);
 
-        $invoices = $query->paginate(20)->withQueryString();
+        $invoices = $query->with('customer')->paginate(20)->withQueryString();
 
         return view('invoices.index', compact('invoices'));
     }
@@ -69,6 +70,7 @@ class InvoiceController extends Controller
             $this->recalculate($invoice);
         });
 
+        Cache::forget('dashboard.stats');
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
     }
 
@@ -98,12 +100,14 @@ class InvoiceController extends Controller
             $this->recalculate($invoice);
         });
 
+        Cache::forget('dashboard.stats');
         return redirect()->route('invoices.index')->with('success', 'Invoice updated.');
     }
 
     public function destroy(Invoice $invoice)
     {
         $invoice->delete();
+        Cache::forget('dashboard.stats');
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
     }
 
@@ -111,6 +115,7 @@ class InvoiceController extends Controller
     {
         $request->validate(['status' => 'required|in:draft,sent,paid,partial,cancelled']);
         $invoice->update(['status' => $request->status]);
+        Cache::forget('dashboard.stats');
         return back()->with('success', 'Status updated.');
     }
 
@@ -130,6 +135,7 @@ class InvoiceController extends Controller
         $status = $paid >= $invoice->grand_total ? 'paid' : 'partial';
         $invoice->update(['amount_paid' => $paid, 'status' => $status]);
 
+        Cache::forget('dashboard.stats');
         return back()->with('success', 'Payment recorded.');
     }
 

@@ -93,7 +93,7 @@ body {
 .stat-grid    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
 .stat-card    { background: var(--surface); border: 1px solid var(--bdr); border-radius: var(--radius-lg); padding: 18px 20px; }
 .stat-label   { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--t4); margin-bottom: 8px; }
-.stat-value   { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--t1); }
+.stat-value   { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--t1); }
 .stat-card.ok   .stat-value { color: var(--ok); }
 .stat-card.acc  .stat-value { color: var(--accent); }
 .stat-card.err  .stat-value { color: var(--err); }
@@ -216,14 +216,14 @@ table.tbl .c   { text-align: center; }
 .col-chip.on   { background: var(--accent-l); color: var(--accent-t); border-color: var(--accent); }
 
 table.items-tbl             { width: 100%; border-collapse: collapse; }
-table.items-tbl th          { padding: 8px 5px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--t4); border-bottom: 1px solid var(--bdr); background: var(--s2); white-space: nowrap; }
+table.items-tbl th          { padding: 8px 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--t4); border-bottom: 1px solid var(--bdr); background: var(--s2); white-space: nowrap; }
 table.items-tbl td          { padding: 3px 4px; border-bottom: 1px solid var(--s3); vertical-align: middle; }
 table.items-tbl tr:hover td { background: var(--s2); }
 table.items-tbl .r          { text-align: right; }
 table.items-tbl .c          { text-align: center; }
 .td-num        { color: var(--t4); font-size: 11px; text-align: center; padding-top: 10px !important; width: 28px; }
 .td-calc       { font-size: 12px; font-variant-numeric: tabular-nums; padding: 10px 6px !important; }
-.td-bold       { font-weight: 600; color: var(--t1); }
+.td-bold       { font-weight: 700; color: var(--t1); }
 
 .td-inp        {
   width: 100%; border: 1px solid transparent; border-radius: 5px;
@@ -272,14 +272,14 @@ table.items-tbl .c          { text-align: center; }
 .totals-block  {}
 .total-row     { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
 .total-row .tl { font-size: 12px; color: var(--t3); }
-.total-row .tv { font-size: 12px; font-weight: 500; color: var(--t2); font-variant-numeric: tabular-nums; }
+.total-row .tv { font-size: 12px; font-weight: 400; color: var(--t2); font-variant-numeric: tabular-nums; }
 .total-row.separator { border-top: 1px solid var(--bdr); margin-top: 8px; padding-top: 8px; }
 .total-row.grand .tl { font-size: 15px; font-weight: 700; color: var(--t1); }
 .total-row.grand .tv { font-size: 18px; font-weight: 700; color: var(--t1); }
 .gst-breakdown { background: var(--s2); border: 1px solid var(--bdr); border-radius: var(--radius); padding: 10px 12px; margin: 8px 0; }
 .gst-row       { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
 .gst-row .gl   { color: var(--t3); }
-.gst-row .gv   { font-weight: 500; font-variant-numeric: tabular-nums; }
+.gst-row .gv   { font-weight: 400; font-variant-numeric: tabular-nums; }
 .gst-row.total { border-top: 1px solid var(--bdr); margin-top: 4px; padding-top: 5px; }
 .gst-row.total .gl { font-weight: 600; color: var(--t2); }
 .amount-words  { padding: 7px 10px; background: var(--warn-bg); border-radius: 6px; font-size: 10px; color: var(--warn); font-style: italic; line-height: 1.5; margin-top: 8px; }
@@ -305,7 +305,7 @@ table.items-tbl .c          { text-align: center; }
 .summary-row   { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--s3); font-size: 12px; }
 .summary-row:last-child { border-bottom: none; }
 .summary-row .sl { color: var(--t3); }
-.summary-row .sv { font-weight: 500; color: var(--t2); font-variant-numeric: tabular-nums; }
+.summary-row .sv { font-weight: 400; color: var(--t2); font-variant-numeric: tabular-nums; }
 .summary-row.grand { padding: 8px 0; font-size: 14px; font-weight: 700; }
 .summary-row.grand .sl { color: var(--t1); }
 .summary-row.grand .sv { color: var(--accent); }
