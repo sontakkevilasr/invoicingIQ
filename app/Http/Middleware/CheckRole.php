@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class CheckRole
+{
+    /**
+     * Usage: ->middleware('role:admin')  or  ->middleware('role:admin,staff')
+     */
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        if (! $request->user() || ! $request->user()->hasRole($roles)) {
+            abort(403, 'You do not have permission to perform this action.');
+        }
+
+        return $next($request);
+    }
+}

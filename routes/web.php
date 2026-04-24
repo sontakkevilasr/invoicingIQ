@@ -1,31 +1,79 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GstReportController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+// ── Guest-only (redirects authenticated users to /) ────────────
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store'])->name('login.post');
+});
 
-// Invoices
-Route::resource('invoices', InvoiceController::class);
-Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.status');
-Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
-Route::post('invoices/{invoice}/payment', [InvoiceController::class, 'recordPayment'])->name('invoices.payment');
+Route::post('/logout', [LoginController::class, 'destroy'])
+    ->name('logout')
+    ->middleware('auth');
 
-// Customers
-Route::get('customers/search', [CustomerController::class, 'search'])->name('customers.search');
-Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
+// ── Authenticated routes ───────────────────────────────────────
+Route::middleware('auth')->group(function () {
 
-// Items
-Route::get('items/search', [ItemController::class, 'search'])->name('items.search');
-Route::resource('items', ItemController::class)->only(['index', 'store', 'update', 'destroy']);
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-// Settings
-Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
-Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+    // ── Invoices ───────────────────────────────────────────────
+    // Read (all roles)
+    Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 
-// GST Reports
-Route::get('reports/gst', [App\Http\Controllers\GstReportController::class, 'index'])->name('reports.gst');
+    // Write (admin + staff)
+    Route::middleware('role:admin,staff')->group(function () {
+        Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
+        Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+        Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+        Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.status');
+        Route::post('invoices/{invoice}/payment', [InvoiceController::class, 'recordPayment'])->name('invoices.payment');
+    });
+
+    // ── Customers ──────────────────────────────────────────────
+    // Search used during invoice creation — all roles
+    Route::get('customers/search', [CustomerController::class, 'search'])->name('customers.search');
+
+    // Read
+    Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+
+    // Write
+    Route::middleware('role:admin,staff')->group(function () {
+        Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+    });
+
+    // ── Items ──────────────────────────────────────────────────
+    Route::get('items/search', [ItemController::class, 'search'])->name('items.search');
+    Route::get('items', [ItemController::class, 'index'])->name('items.index');
+
+    Route::middleware('role:admin,staff')->group(function () {
+        Route::post('items', [ItemController::class, 'store'])->name('items.store');
+        Route::put('items/{item}', [ItemController::class, 'update'])->name('items.update');
+        Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
+    });
+
+    // ── Reports (all roles) ────────────────────────────────────
+    Route::get('reports/gst', [GstReportController::class, 'index'])->name('reports.gst');
+
+    // ── Admin-only ─────────────────────────────────────────────
+    Route::middleware('role:admin')->group(function () {
+        Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+        Route::resource('users', UsersController::class)->except(['show', 'create', 'edit']);
+    });
+});

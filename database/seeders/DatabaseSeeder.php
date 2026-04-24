@@ -5,12 +5,24 @@ namespace Database\Seeders;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Default admin user
+        User::updateOrCreate(
+            ['email' => 'admin@invoiceiq.com'],
+            [
+                'name'     => 'Admin',
+                'password' => Hash::make('password'),
+                'role'     => 'admin',
+            ]
+        );
+
         // Default settings
         $defaults = [
             'company_name'       => 'Acme Solutions Pvt. Ltd.',
