@@ -1,0 +1,39 @@
+# ── Dependencies ──────────────────────────────────────────────
+/vendor/
+/node_modules/
+
+# ── Environment ────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Laravel generated / runtime ────────────────────────────────
+/bootstrap/cache/*.php
+/storage/*.key
+/storage/app/private/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/testing/
+/storage/framework/views/
+/storage/logs/
+
+# ── Build output ───────────────────────────────────────────────
+/public/build/
+/public/hot
+/public/storage
+
+# ── Testing ────────────────────────────────────────────────────
+/.phpunit.cache/
+/coverage/
+
+# ── IDE & editors ──────────────────────────────────────────────
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ── OS ─────────────────────────────────────────────────────────
+desktop.ini
+*.log
