@@ -15,7 +15,14 @@ class CustomerController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('customers.index', compact('customers'));
+        $stats = [
+            'total'      => Customer::count(),
+            'with_gstin' => Customer::whereNotNull('gstin')->where('gstin', '!=', '')->count(),
+            'with_email' => Customer::whereNotNull('email')->where('email', '!=', '')->count(),
+            'states'     => Customer::whereNotNull('billing_state')->where('billing_state', '!=', '')->distinct('billing_state')->count(),
+        ];
+
+        return view('customers.index', compact('customers', 'stats'));
     }
 
     public function store(Request $request)
