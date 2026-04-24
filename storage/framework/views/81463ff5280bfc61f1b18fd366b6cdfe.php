@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In — InvoiceIQ</title>
+    <title>Sign In — Trivo - InvoiceIQ</title>
     <link rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
     <style>
         body {
@@ -97,7 +97,7 @@
                     <path d="M5 5h6M5 8h6M5 11h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
                 </svg>
             </div>
-            <div class="brand-name">InvoiceIQ</div>
+            <div class="brand-name">Trivo - InvoiceIQ</div>
             <div class="brand-tagline">GST Billing Suite</div>
         </div>
 
@@ -165,6 +165,12 @@
         <p style="text-align:center;font-size:11px;color:var(--t4);margin-top:20px;">
             Contact your administrator if you need access.
         </p>
+
+        <div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--bdr);">
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px;">Powered by</div>
+            <div style="font-family:var(--font-head);font-size:18px;color:var(--t3);letter-spacing:.5px;">Trivo</div>
+            <div style="font-size:10px;color:var(--t4);margin-top:4px;">&copy; <?php echo e(date('Y')); ?> Trivo. All rights reserved.</div>
+        </div>
 
     </div>
 </body>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-    <title><?php echo $__env->yieldContent('title', 'InvoiceIQ'); ?> — InvoiceIQ</title>
+    <title><?php echo $__env->yieldContent('title', 'Trivo - InvoiceIQ'); ?> — Trivo - InvoiceIQ</title>
     <link rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
     <style>
         /* ── Sidebar user panel ────────────────── */
@@ -64,7 +64,7 @@
     
     <aside class="sidebar no-print">
         <div class="sidebar-logo">
-            <div class="brand">InvoiceIQ</div>
+            <div class="brand">Trivo - InvoiceIQ</div>
             <div class="tagline">GST Billing Suite</div>
         </div>
 

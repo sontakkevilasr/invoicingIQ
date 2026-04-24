@@ -1,6 +1,6 @@
 <?php
 return [
-    'name'     => env('APP_NAME', 'InvoiceIQ'),
+    'name'     => env('APP_NAME', 'InvoiTceIQ'),
     'env'      => env('APP_ENV', 'production'),
     'debug'    => (bool) env('APP_DEBUG', false),
     'url'      => env('APP_URL', 'http://localhost'),

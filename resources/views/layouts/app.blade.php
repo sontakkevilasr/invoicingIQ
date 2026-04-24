@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'InvoiceIQ') — InvoiceIQ</title>
+    <title>@yield('title', 'Trivo - InvoiceIQ') — Trivo - InvoiceIQ</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
         /* ── Sidebar user panel ────────────────── */
@@ -64,7 +64,7 @@
     {{-- Sidebar --}}
     <aside class="sidebar no-print">
         <div class="sidebar-logo">
-            <div class="brand">InvoiceIQ</div>
+            <div class="brand">Trivo - InvoiceIQ</div>
             <div class="tagline">GST Billing Suite</div>
         </div>
 
