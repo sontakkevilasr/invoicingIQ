@@ -2,35 +2,82 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\GstReportExport;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Setting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GstReportController extends Controller
 {
-    /**
-     * Landing page — pick report type + date range
-     */
+    private const REPORT_LABELS = [
+        'gstr1'         => 'GSTR-1 Summary',
+        'b2b'           => 'B2B — Registered Customers',
+        'b2c'           => 'B2C — Unregistered Customers',
+        'hsn'           => 'HSN / SAC Wise Summary',
+        'tax_liability' => 'Tax Liability Report',
+    ];
+
     public function index(Request $request)
     {
-        $report   = $request->report ?? 'gstr1';
-        $from     = $request->from   ?? now()->startOfMonth()->format('Y-m-d');
-        $to       = $request->to     ?? now()->endOfMonth()->format('Y-m-d');
-        $period   = $request->period ?? 'custom';
+        $report = $request->report ?? 'gstr1';
+        $from   = $request->from   ?? now()->startOfMonth()->format('Y-m-d');
+        $to     = $request->to     ?? now()->endOfMonth()->format('Y-m-d');
+        $period = $request->period ?? 'custom';
 
         [$from, $to] = $this->resolvePeriod($period, $from, $to);
 
-        $data = match ($report) {
-            'gstr1'       => $this->gstr1($from, $to),
-            'hsn'         => $this->hsnSummary($from, $to),
-            'tax_liability' => $this->taxLiability($from, $to),
-            'b2b'         => $this->b2bSummary($from, $to),
-            'b2c'         => $this->b2cSummary($from, $to),
-            default       => $this->gstr1($from, $to),
-        };
+        $data = $this->buildData($report, $from, $to);
 
         return view('reports.gst', compact('report', 'from', 'to', 'period', 'data'));
+    }
+
+    public function export(Request $request)
+    {
+        $report = $request->report ?? 'gstr1';
+        $from   = $request->from   ?? now()->startOfMonth()->format('Y-m-d');
+        $to     = $request->to     ?? now()->endOfMonth()->format('Y-m-d');
+        $period = $request->period ?? 'custom';
+        $format = $request->format ?? 'pdf';
+
+        [$from, $to] = $this->resolvePeriod($period, $from, $to);
+
+        $data = $this->buildData($report, $from, $to);
+
+        $label    = self::REPORT_LABELS[$report] ?? 'GST Report';
+        $filename = str_replace(['/', '\\'], '-', $label) . ' ' . $from . ' to ' . $to;
+
+        if ($format === 'excel') {
+            return Excel::download(
+                new GstReportExport($report, $data, $from, $to),
+                $filename . '.xlsx'
+            );
+        }
+
+        $settings      = Setting::pluck('value', 'key')->toArray();
+        $reportLabels  = self::REPORT_LABELS;
+
+        $pdf = Pdf::loadView('reports.gst_pdf', compact(
+            'report', 'data', 'from', 'to', 'settings', 'reportLabels'
+        ))->setPaper('a4', 'landscape');
+
+        return $pdf->download($filename . '.pdf');
+    }
+
+    /* ── Data builder ────────────────────────────────────── */
+    private function buildData(string $report, string $from, string $to): array
+    {
+        return match ($report) {
+            'gstr1'         => $this->gstr1($from, $to),
+            'hsn'           => $this->hsnSummary($from, $to),
+            'tax_liability' => $this->taxLiability($from, $to),
+            'b2b'           => $this->b2bSummary($from, $to),
+            'b2c'           => $this->b2cSummary($from, $to),
+            default         => $this->gstr1($from, $to),
+        };
     }
 
     /* ── GSTR-1 Summary ──────────────────────────────────── */
@@ -42,8 +89,8 @@ class GstReportController extends Controller
             ->orderBy('invoice_date')
             ->get();
 
-        $b2b   = []; // Registered (GSTIN present)
-        $b2c   = []; // Unregistered
+        $b2b   = [];
+        $b2c   = [];
         $totals = [
             'taxable' => 0, 'cgst' => 0, 'sgst' => 0, 'igst' => 0,
             'total_tax' => 0, 'grand' => 0, 'invoices' => 0,
@@ -123,7 +170,6 @@ class GstReportController extends Controller
     /* ── Tax Liability Report ────────────────────────────── */
     private function taxLiability(string $from, string $to): array
     {
-        // Group by GST rate
         $byRate = InvoiceItem::join('invoices', 'invoice_items.invoice_id', '=', 'invoices.id')
             ->whereNotIn('invoices.status', ['draft', 'cancelled'])
             ->whereBetween('invoices.invoice_date', [$from, $to])
@@ -139,7 +185,6 @@ class GstReportController extends Controller
             ->orderBy('invoice_items.gst_rate')
             ->get();
 
-        // Month-wise breakdown
         $monthly = Invoice::whereNotIn('status', ['draft', 'cancelled'])
             ->whereBetween('invoice_date', [$from, $to])
             ->select(
@@ -244,13 +289,13 @@ class GstReportController extends Controller
     private function resolvePeriod(string $period, string $from, string $to): array
     {
         return match ($period) {
-            'this_month'  => [now()->startOfMonth()->format('Y-m-d'), now()->endOfMonth()->format('Y-m-d')],
-            'last_month'  => [now()->subMonth()->startOfMonth()->format('Y-m-d'), now()->subMonth()->endOfMonth()->format('Y-m-d')],
-            'this_quarter'=> [$this->quarterStart(now()), $this->quarterEnd(now())],
-            'last_quarter'=> [$this->quarterStart(now()->subQuarter()), $this->quarterEnd(now()->subQuarter())],
-            'this_year'   => [now()->startOfYear()->format('Y-m-d'), now()->endOfYear()->format('Y-m-d')],
-            'last_year'   => [now()->subYear()->startOfYear()->format('Y-m-d'), now()->subYear()->endOfYear()->format('Y-m-d')],
-            default       => [$from, $to],
+            'this_month'   => [now()->startOfMonth()->format('Y-m-d'), now()->endOfMonth()->format('Y-m-d')],
+            'last_month'   => [now()->subMonth()->startOfMonth()->format('Y-m-d'), now()->subMonth()->endOfMonth()->format('Y-m-d')],
+            'this_quarter' => [$this->quarterStart(now()), $this->quarterEnd(now())],
+            'last_quarter' => [$this->quarterStart(now()->subQuarter()), $this->quarterEnd(now()->subQuarter())],
+            'this_year'    => [now()->startOfYear()->format('Y-m-d'), now()->endOfYear()->format('Y-m-d')],
+            'last_year'    => [now()->subYear()->startOfYear()->format('Y-m-d'), now()->subYear()->endOfYear()->format('Y-m-d')],
+            default        => [$from, $to],
         };
     }
 

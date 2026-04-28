@@ -14,12 +14,31 @@
                 {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
             </div>
         </div>
-        <button onclick="window.print()" class="btn no-print">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M4 6V2h8v4M4 12H2V7h12v5h-2M4 10h8v4H4v-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-            </svg>
-            Print / Export
-        </button>
+        <div class="no-print" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <a href="{{ route('reports.gst.export', ['report'=>$report,'period'=>$period,'from'=>$from,'to'=>$to,'format'=>'excel']) }}"
+               class="btn btn-success" style="display:inline-flex;align-items:center;gap:6px;background:#16a34a;color:#fff;border-color:#16a34a;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M5 6l2 2-2 2M8 10h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                Excel (.xlsx)
+            </a>
+            <a href="{{ route('reports.gst.export', ['report'=>$report,'period'=>$period,'from'=>$from,'to'=>$to,'format'=>'pdf']) }}"
+               class="btn" style="display:inline-flex;align-items:center;gap:6px;background:#dc2626;color:#fff;border-color:#dc2626;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 2h6l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M9 2v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M5.5 9.5h5M5.5 11.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                PDF
+            </a>
+            <button onclick="window.print()" class="btn" style="display:inline-flex;align-items:center;gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6V2h8v4M4 12H2V7h12v5h-2M4 10h8v4H4v-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                </svg>
+                Print
+            </button>
+        </div>
     </div>
 
     {{-- Report type tabs --}}

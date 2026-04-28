@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
     // ── Reports (all roles) ────────────────────────────────────
     Route::get('reports/gst', [GstReportController::class, 'index'])->name('reports.gst');
+    Route::get('reports/gst/export', [GstReportController::class, 'export'])->name('reports.gst.export');
 
     // ── Admin-only ─────────────────────────────────────────────
     Route::middleware('role:admin')->group(function () {
