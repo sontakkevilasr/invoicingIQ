@@ -51,13 +51,13 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'number'       => 'required|unique:invoices,number',
-            'invoice_date' => 'required|date',
-            'rows'         => 'required|array|min:1',
+            'number'           => 'required|unique:invoices,number',
+            'invoice_date'     => 'required|date',
+            'rows'             => 'required|array|min:1',
             'rows.*.item_name' => 'required|string',
             'rows.*.qty'       => 'required|numeric|min:0.001',
             'rows.*.rate'      => 'required|numeric|min:0',
-        ]);
+        ], $this->rowMessages($request));
 
         // Advance the auto-sequence only if the user kept the suggested number
         if ($request->number === Invoice::peekNumber()) {
@@ -85,13 +85,13 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'number'       => "required|unique:invoices,number,{$invoice->id}",
-            'invoice_date' => 'required|date',
-            'rows'         => 'required|array|min:1',
+            'number'           => "required|unique:invoices,number,{$invoice->id}",
+            'invoice_date'     => 'required|date',
+            'rows'             => 'required|array|min:1',
             'rows.*.item_name' => 'required|string',
             'rows.*.qty'       => 'required|numeric|min:0.001',
             'rows.*.rate'      => 'required|numeric|min:0',
-        ]);
+        ], $this->rowMessages($request));
 
         DB::transaction(function () use ($request, $invoice) {
             $invoice->update($this->invoiceData($request));
@@ -142,13 +142,36 @@ class InvoiceController extends Controller
     public function pdf(Invoice $invoice)
     {
         $invoice->load('items', 'payments');
-        $settings = \App\Models\Setting::all_settings();
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('invoice', 'settings'))
+        $settings    = \App\Models\Setting::all_settings();
+        $logoBase64  = \App\Http\Controllers\SettingsController::logoBase64($settings);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('invoice', 'settings', 'logoBase64'))
             ->setPaper('a4', 'portrait');
         return $pdf->download("Invoice-{$invoice->number}.pdf");
     }
 
     // ─── Helpers ─────────────────────────────────────────────
+
+    private function rowMessages(Request $request): array
+    {
+        $messages = [
+            'number.required'       => 'Invoice number is required.',
+            'number.unique'         => 'This invoice number is already in use.',
+            'invoice_date.required' => 'Invoice date is required.',
+            'rows.required'         => 'Please add at least one line item.',
+            'rows.min'              => 'Please add at least one line item.',
+        ];
+
+        foreach (array_keys($request->rows ?? []) as $i) {
+            $n = $i + 1;
+            $messages["rows.{$i}.item_name.required"] = "Row {$n}: Item name is required.";
+            $messages["rows.{$i}.qty.required"]       = "Row {$n}: Quantity is required.";
+            $messages["rows.{$i}.qty.min"]            = "Row {$n}: Quantity must be greater than zero.";
+            $messages["rows.{$i}.rate.required"]      = "Row {$n}: Rate is required.";
+            $messages["rows.{$i}.rate.min"]           = "Row {$n}: Rate cannot be negative.";
+        }
+
+        return $messages;
+    }
 
     private function invoiceData(Request $request): array
     {

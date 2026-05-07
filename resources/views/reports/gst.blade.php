@@ -32,12 +32,12 @@
                 </svg>
                 PDF
             </a>
-            <button onclick="window.print()" class="btn" style="display:inline-flex;align-items:center;gap:6px;">
+            <!-- <button onclick="window.print()" class="btn" style="display:inline-flex;align-items:center;gap:6px;">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <path d="M4 6V2h8v4M4 12H2V7h12v5h-2M4 10h8v4H4v-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
                 </svg>
                 Print
-            </button>
+            </button> -->
         </div>
     </div>
 

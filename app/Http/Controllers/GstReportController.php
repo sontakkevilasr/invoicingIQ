@@ -59,9 +59,10 @@ class GstReportController extends Controller
 
         $settings      = Setting::pluck('value', 'key')->toArray();
         $reportLabels  = self::REPORT_LABELS;
+        $logoBase64    = \App\Http\Controllers\SettingsController::logoBase64($settings);
 
         $pdf = Pdf::loadView('reports.gst_pdf', compact(
-            'report', 'data', 'from', 'to', 'settings', 'reportLabels'
+            'report', 'data', 'from', 'to', 'settings', 'reportLabels', 'logoBase64'
         ))->setPaper('a4', 'landscape');
 
         return $pdf->download($filename . '.pdf');

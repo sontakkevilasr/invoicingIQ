@@ -74,6 +74,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::post('settings/logo', [SettingsController::class, 'uploadLogo'])->name('settings.logo.upload');
+        Route::delete('settings/logo', [SettingsController::class, 'removeLogo'])->name('settings.logo.remove');
 
         Route::resource('users', UsersController::class)->except(['show', 'create', 'edit']);
     });

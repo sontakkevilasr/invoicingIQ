@@ -212,9 +212,7 @@ function openE(u) {
     document.getElementById('fPwdC').value  = '';
 }
 
-document.getElementById('uModal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeM();
-});
+
 </script>
 @endpush
 @endsection

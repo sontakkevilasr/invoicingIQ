@@ -410,21 +410,25 @@
             <div class="form-group">
                 <label class="form-label">Business Name <span class="req">*</span></label>
                 <input type="text" id="qc_name" class="form-control">
+                <div class="error-msg" id="qc-err-name"></div>
             </div>
             <div class="form-row form-row-2">
                 <div class="form-group">
                     <label class="form-label">GSTIN</label>
                     <input type="text" id="qc_gstin" class="form-control" placeholder="27AABCU9603R1ZX"
-                           oninput="autoStateFromGstin(this.value)">
+                           oninput="autoStateFromGstin(this.value)" maxlength="15" style="font-family:monospace;">
+                    <div class="error-msg" id="qc-err-gstin"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Phone</label>
-                    <input type="text" id="qc_phone" class="form-control">
+                    <input type="text" id="qc_phone" class="form-control" maxlength="15">
+                    <div class="error-msg" id="qc-err-phone"></div>
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" id="qc_email" class="form-control">
+                <input type="text" id="qc_email" class="form-control">
+                <div class="error-msg" id="qc-err-email"></div>
             </div>
             <div class="form-group">
                 <label class="form-label">Address</label>
@@ -437,7 +441,45 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">State</label>
-                    <input type="text" id="qc_state" class="form-control">
+                    <select id="qc_state" class="form-control" onchange="qcSetStateCode(this.value)">
+                        <option value="">— Select State —</option>
+                        <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                        <option value="Assam">Assam</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chandigarh">Chandigarh</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Goa">Goa</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                        <option value="Jharkhand">Jharkhand</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Ladakh">Ladakh</option>
+                        <option value="Lakshadweep">Lakshadweep</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Manipur">Manipur</option>
+                        <option value="Meghalaya">Meghalaya</option>
+                        <option value="Mizoram">Mizoram</option>
+                        <option value="Nagaland">Nagaland</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Puducherry">Puducherry</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Sikkim">Sikkim</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Tripura">Tripura</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Uttarakhand">Uttarakhand</option>
+                        <option value="West Bengal">West Bengal</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">State Code</label>
@@ -462,7 +504,8 @@
 const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
 const MY_SC   = '<?php echo e($s["company_state_code"] ?? "27"); ?>';
 const HDR     = {'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'};
-const STATE_MAP = {'27':'Maharashtra','29':'Karnataka','07':'Delhi','09':'Uttar Pradesh','33':'Tamil Nadu','24':'Gujarat','06':'Haryana','03':'Punjab','08':'Rajasthan','23':'Madhya Pradesh','19':'West Bengal','21':'Odisha','36':'Telangana','32':'Kerala','20':'Jharkhand','10':'Bihar','22':'Chhattisgarh','12':'Arunachal Pradesh','18':'Assam'};
+const STATE_MAP = {'01':'Jammu and Kashmir','02':'Himachal Pradesh','03':'Punjab','04':'Chandigarh','05':'Uttarakhand','06':'Haryana','07':'Delhi','08':'Rajasthan','09':'Uttar Pradesh','10':'Bihar','11':'Sikkim','12':'Arunachal Pradesh','13':'Nagaland','14':'Manipur','15':'Mizoram','16':'Tripura','17':'Meghalaya','18':'Assam','19':'West Bengal','20':'Jharkhand','21':'Odisha','22':'Chhattisgarh','23':'Madhya Pradesh','24':'Gujarat','26':'Dadra and Nagar Haveli and Daman and Diu','27':'Maharashtra','29':'Karnataka','30':'Goa','31':'Lakshadweep','32':'Kerala','33':'Tamil Nadu','34':'Puducherry','35':'Andaman and Nicobar Islands','36':'Telangana','37':'Andhra Pradesh','38':'Ladakh'};
+const STATE_CODES_QC = {'Andaman and Nicobar Islands':'35','Andhra Pradesh':'37','Arunachal Pradesh':'12','Assam':'18','Bihar':'10','Chandigarh':'04','Chhattisgarh':'22','Dadra and Nagar Haveli and Daman and Diu':'26','Delhi':'07','Goa':'30','Gujarat':'24','Haryana':'06','Himachal Pradesh':'02','Jammu and Kashmir':'01','Jharkhand':'20','Karnataka':'29','Kerala':'32','Ladakh':'38','Lakshadweep':'31','Madhya Pradesh':'23','Maharashtra':'27','Manipur':'14','Meghalaya':'17','Mizoram':'15','Nagaland':'13','Odisha':'21','Puducherry':'34','Punjab':'03','Rajasthan':'08','Sikkim':'11','Tamil Nadu':'33','Telangana':'36','Tripura':'16','Uttar Pradesh':'09','Uttarakhand':'05','West Bengal':'19'};
 
 let rowCount = 0, qiRowIdx = null;
 let visCol   = <?php echo json_encode($visCol, 15, 512) ?>;
@@ -485,7 +528,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', e => {
         if (!e.target.closest('#custSearchWrap'))  document.getElementById('custDd').style.display='none';
         if (!e.target.closest('.item-cell'))        document.querySelectorAll('.item-dd').forEach(d=>d.style.display='none');
-        if (e.target.classList.contains('modal-overlay')) e.target.style.display='none';
     });
     document.getElementById('posInput').addEventListener('input', () => {
         document.getElementById('f_pos').value = document.getElementById('posInput').value;
@@ -777,28 +819,99 @@ async function saveQuickItem() {
 }
 
 /* ── Quick add customer ── */
+function qcClearErrors() {
+    ['qc-err-name','qc-err-gstin','qc-err-phone','qc-err-email'].forEach(id=>{
+        document.getElementById(id).textContent='';
+    });
+    ['qc_name','qc_gstin','qc_phone','qc_email'].forEach(id=>{
+        document.getElementById(id).style.borderColor='';
+    });
+}
+function qcSetError(fieldId, errId, msg) {
+    document.getElementById(errId).textContent = msg;
+    document.getElementById(fieldId).style.borderColor = 'var(--err)';
+}
+function qcSetStateCode(state) {
+    document.getElementById('qc_sc').value = STATE_CODES_QC[state] || '';
+}
 function openQcModal(name) {
+    qcClearErrors();
     document.getElementById('qc_name').value = name||'';
-    ['qc_gstin','qc_phone','qc_email','qc_addr','qc_city','qc_state','qc_sc'].forEach(id=>document.getElementById(id).value='');
+    ['qc_gstin','qc_phone','qc_email','qc_addr','qc_city','qc_sc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('qc_state').value = '';
     document.getElementById('qcModal').style.display='flex';
     document.getElementById('custDd').style.display='none';
 }
 function autoStateFromGstin(g) {
-    if(g.length>=2){ const sc=g.slice(0,2); document.getElementById('qc_sc').value=sc; if(STATE_MAP[sc]) document.getElementById('qc_state').value=STATE_MAP[sc]; }
+    if(g.length>=2){
+        const sc=g.slice(0,2);
+        document.getElementById('qc_sc').value=sc;
+        if(STATE_MAP[sc]) document.getElementById('qc_state').value=STATE_MAP[sc];
+    }
 }
+function validateQcForm() {
+    qcClearErrors();
+    let valid = true;
+    const name  = document.getElementById('qc_name').value.trim();
+    const gstin = document.getElementById('qc_gstin').value.trim().toUpperCase();
+    const phone = document.getElementById('qc_phone').value.trim();
+    const email = document.getElementById('qc_email').value.trim();
+
+    if (!name) {
+        qcSetError('qc_name','qc-err-name','Customer name is required.');
+        valid = false;
+    }
+    if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)) {
+        qcSetError('qc_gstin','qc-err-gstin','Invalid GSTIN format (e.g. 27AABCT1234R1ZX).');
+        valid = false;
+    }
+    if (phone && !/^[0-9+\-\s]{7,15}$/.test(phone)) {
+        qcSetError('qc_phone','qc-err-phone','Enter a valid phone number.');
+        valid = false;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        qcSetError('qc_email','qc-err-email','Enter a valid email address.');
+        valid = false;
+    }
+    if (!valid) {
+        const first = document.querySelector('#qcModal .error-msg:not(:empty)');
+        if (first) first.previousElementSibling.focus();
+    }
+    return valid;
+}
+
 async function saveQuickCust() {
-    const name = document.getElementById('qc_name').value.trim();
-    if (!name) { alert('Name is required.'); return; }
+    if (!validateQcForm()) return;
+
     const payload = {
-        name, gstin:document.getElementById('qc_gstin').value.trim(),
-        email:document.getElementById('qc_email').value.trim(), phone:document.getElementById('qc_phone').value.trim(),
-        billing_address:document.getElementById('qc_addr').value.trim(), billing_city:document.getElementById('qc_city').value.trim(),
-        billing_state:document.getElementById('qc_state').value.trim(), billing_state_code:document.getElementById('qc_sc').value.trim(),
+        name:             document.getElementById('qc_name').value.trim(),
+        gstin:            document.getElementById('qc_gstin').value.trim().toUpperCase(),
+        email:            document.getElementById('qc_email').value.trim(),
+        phone:            document.getElementById('qc_phone').value.trim(),
+        billing_address:  document.getElementById('qc_addr').value.trim(),
+        billing_city:     document.getElementById('qc_city').value.trim(),
+        billing_state:    document.getElementById('qc_state').value,
+        billing_state_code: document.getElementById('qc_sc').value.trim(),
     };
-    const r = await fetch('/customers',{method:'POST',headers:HDR,body:JSON.stringify(payload)});
-    const c = await r.json();
-    pickCustomer(encodeURIComponent(JSON.stringify(c)));
-    document.getElementById('qcModal').style.display='none';
+
+    try {
+        const r = await fetch('/customers', {method:'POST', headers:HDR, body:JSON.stringify(payload)});
+        if (!r.ok) {
+            const err = await r.json();
+            if (err.errors) {
+                if (err.errors.name)  qcSetError('qc_name',  'qc-err-name',  err.errors.name[0]);
+                if (err.errors.gstin) qcSetError('qc_gstin', 'qc-err-gstin', err.errors.gstin[0]);
+                if (err.errors.phone) qcSetError('qc_phone', 'qc-err-phone', err.errors.phone[0]);
+                if (err.errors.email) qcSetError('qc_email', 'qc-err-email', err.errors.email[0]);
+            }
+            return;
+        }
+        const c = await r.json();
+        pickCustomer(encodeURIComponent(JSON.stringify(c)));
+        document.getElementById('qcModal').style.display='none';
+    } catch(e) {
+        console.error('Save customer failed:', e);
+    }
 }
 
 /* ── Misc helpers ── */

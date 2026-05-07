@@ -122,27 +122,31 @@
             <div class="modal-title" id="mTitle">Add Customer</div>
             <button class="modal-close" onclick="closeM()">×</button>
         </div>
-        <form id="cForm" method="POST" action="{{ route('customers.store') }}">
+        <form id="cForm" method="POST" action="{{ route('customers.store') }}" onsubmit="return validateCForm()">
             @csrf
             <input type="hidden" id="fM" name="_method" value="">
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Name <span class="req">*</span></label>
-                    <input type="text" name="name" id="fn" class="form-control" required placeholder="Customer / company name">
+                    <input type="text" name="name" id="fn" class="form-control" placeholder="Customer / company name">
+                    <div class="error-msg" id="err-fn"></div>
                 </div>
                 <div class="form-row form-row-2">
                     <div class="form-group">
                         <label class="form-label">GSTIN</label>
-                        <input name="gstin" id="fg" class="form-control" placeholder="27AABCT1234R1ZX" style="font-family:monospace;">
+                        <input name="gstin" id="fg" class="form-control" placeholder="27AABCT1234R1ZX" style="font-family:monospace;" maxlength="15">
+                        <div class="error-msg" id="err-fg"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone</label>
-                        <input name="phone" id="fp" class="form-control" placeholder="98XXXXXXXX">
+                        <input name="phone" id="fp" class="form-control" placeholder="98XXXXXXXX" maxlength="15">
+                        <div class="error-msg" id="err-fp"></div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" id="fe" class="form-control" placeholder="billing@company.com">
+                    <input type="text" name="email" id="fe" class="form-control" placeholder="billing@company.com">
+                    <div class="error-msg" id="err-fe"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Billing Address</label>
@@ -155,7 +159,45 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">State</label>
-                        <input name="billing_state" id="fs" class="form-control">
+                        <select name="billing_state" id="fs" class="form-control" onchange="setStateCode(this.value)">
+                            <option value="">— Select State —</option>
+                            <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chandigarh">Chandigarh</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Ladakh">Ladakh</option>
+                            <option value="Lakshadweep">Lakshadweep</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Manipur">Manipur</option>
+                            <option value="Meghalaya">Meghalaya</option>
+                            <option value="Mizoram">Mizoram</option>
+                            <option value="Nagaland">Nagaland</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Puducherry">Puducherry</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Sikkim">Sikkim</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Tripura">Tripura</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">State Code</label>
@@ -183,32 +225,130 @@
 
 @push('scripts')
 <script>
+const STATE_CODES = {
+    'Andaman and Nicobar Islands': '35',
+    'Andhra Pradesh': '37',
+    'Arunachal Pradesh': '12',
+    'Assam': '18',
+    'Bihar': '10',
+    'Chandigarh': '04',
+    'Chhattisgarh': '22',
+    'Dadra and Nagar Haveli and Daman and Diu': '26',
+    'Delhi': '07',
+    'Goa': '30',
+    'Gujarat': '24',
+    'Haryana': '06',
+    'Himachal Pradesh': '02',
+    'Jammu and Kashmir': '01',
+    'Jharkhand': '20',
+    'Karnataka': '29',
+    'Kerala': '32',
+    'Ladakh': '38',
+    'Lakshadweep': '31',
+    'Madhya Pradesh': '23',
+    'Maharashtra': '27',
+    'Manipur': '14',
+    'Meghalaya': '17',
+    'Mizoram': '15',
+    'Nagaland': '13',
+    'Odisha': '21',
+    'Puducherry': '34',
+    'Punjab': '03',
+    'Rajasthan': '08',
+    'Sikkim': '11',
+    'Tamil Nadu': '33',
+    'Telangana': '36',
+    'Tripura': '16',
+    'Uttar Pradesh': '09',
+    'Uttarakhand': '05',
+    'West Bengal': '19',
+};
+
+function setStateCode(state) {
+    document.getElementById('fsc').value = STATE_CODES[state] || '';
+}
+
+function clearCErrors() {
+    ['err-fn','err-fg','err-fp','err-fe'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+    });
+    ['fn','fg','fp','fe'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.borderColor = '';
+    });
+}
+
+function setError(fieldId, errId, msg) {
+    document.getElementById(errId).textContent = msg;
+    document.getElementById(fieldId).style.borderColor = 'var(--err)';
+}
+
+function validateCForm() {
+    clearCErrors();
+    let valid = true;
+
+    const name  = document.getElementById('fn').value.trim();
+    const gstin = document.getElementById('fg').value.trim().toUpperCase();
+    const phone = document.getElementById('fp').value.trim();
+    const email = document.getElementById('fe').value.trim();
+
+    if (!name) {
+        setError('fn', 'err-fn', 'Customer name is required.');
+        valid = false;
+    }
+
+    if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)) {
+        setError('fg', 'err-fg', 'Invalid GSTIN format (e.g. 27AABCT1234R1ZX).');
+        valid = false;
+    }
+
+    if (phone && !/^[0-9+\-\s]{7,15}$/.test(phone)) {
+        setError('fp', 'err-fp', 'Enter a valid phone number.');
+        valid = false;
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('fe', 'err-fe', 'Enter a valid email address.');
+        valid = false;
+    }
+
+    if (!valid) {
+        const first = document.querySelector('#cModal .error-msg:not(:empty)');
+        if (first) first.previousElementSibling.focus();
+    }
+
+    return valid;
+}
+
 function closeM() { document.getElementById('cModal').style.display = 'none'; }
 function openM() {
+    clearCErrors();
     document.getElementById('cModal').style.display = 'flex';
     document.getElementById('mTitle').textContent = 'Add Customer';
     document.getElementById('cForm').action = '{{ route('customers.store') }}';
     document.getElementById('fM').value = '';
-    ['fn','fg','fp','fe','fa','fc','fs','fsc','fpin'].forEach(id => {
+    ['fn','fg','fp','fe','fa','fc','fsc','fpin'].forEach(id => {
         const e = document.getElementById(id);
         if (e) e.value = '';
     });
+    document.getElementById('fs').value = '';
     document.getElementById('ft').value = '30';
 }
 function openE(c) {
+    clearCErrors();
     document.getElementById('cModal').style.display = 'flex';
     document.getElementById('mTitle').textContent = 'Edit Customer';
     document.getElementById('cForm').action = '/customers/' + c.id;
     document.getElementById('fM').value = 'PUT';
-    const m = { name:'fn', gstin:'fg', phone:'fp', email:'fe', billing_address:'fa', billing_city:'fc', billing_state:'fs', billing_state_code:'fsc', billing_pincode:'fpin', payment_terms:'ft' };
+    const m = { name:'fn', gstin:'fg', phone:'fp', email:'fe', billing_address:'fa', billing_city:'fc', billing_state_code:'fsc', billing_pincode:'fpin', payment_terms:'ft' };
     Object.entries(m).forEach(([k, id]) => {
         const e = document.getElementById(id);
         if (e) e.value = c[k] || '';
     });
+    document.getElementById('fs').value = c.billing_state || '';
 }
-document.getElementById('cModal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeM();
-});
+
 </script>
 @endpush
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -40,5 +41,46 @@ class SettingsController extends Controller
         }
 
         return redirect()->route('settings.index')->with('success', 'Settings saved successfully.');
+    }
+
+    public function uploadLogo(Request $request)
+    {
+        $request->validate(['company_logo' => 'required|image|mimes:jpeg,png,gif|max:2048']);
+
+        $existing = Setting::get('company_logo');
+        if ($existing) {
+            Storage::disk('public')->delete($existing);
+        }
+
+        $ext  = $request->file('company_logo')->getClientOriginalExtension();
+        $path = $request->file('company_logo')->storeAs('logos', 'company_logo.' . $ext, 'public');
+        Setting::set('company_logo', $path);
+
+        return redirect()->route('settings.index')->with('success', 'Logo uploaded successfully.');
+    }
+
+    public function removeLogo()
+    {
+        $path = Setting::get('company_logo');
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+        Setting::set('company_logo', '');
+        return redirect()->route('settings.index')->with('success', 'Logo removed.');
+    }
+
+    public static function logoBase64(array $settings): ?string
+    {
+        $logoPath = $settings['company_logo'] ?? '';
+        if (!$logoPath) return null;
+        $fullPath = storage_path('app/public/' . $logoPath);
+        if (!file_exists($fullPath)) return null;
+        $ext  = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'png'   => 'image/png',
+            'gif'   => 'image/gif',
+            default => 'image/jpeg',
+        };
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
     }
 }

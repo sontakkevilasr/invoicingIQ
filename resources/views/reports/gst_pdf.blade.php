@@ -64,6 +64,9 @@ tfoot td.r { text-align:right; font-variant-numeric:tabular-nums; }
 
     {{-- Header --}}
     <div class="report-header">
+        @if($logoBase64)
+            <img src="{{ $logoBase64 }}" style="max-height:52px;max-width:160px;object-fit:contain;display:block;margin-bottom:6px;">
+        @endif
         <div class="company-name">{{ $settings['company_name'] ?? 'Company' }}</div>
         <div class="company-detail">
             {{ $settings['company_address'] ?? '' }}{{ $settings['company_city'] ? ', '.$settings['company_city'] : '' }}{{ $settings['company_state'] ? ', '.$settings['company_state'] : '' }}<br>

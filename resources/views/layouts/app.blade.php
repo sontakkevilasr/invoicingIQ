@@ -22,31 +22,31 @@
             margin-bottom: 4px;
         }
         .user-avatar {
-            width: 30px;
-            height: 30px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             background: var(--accent);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 700;
             flex-shrink: 0;
         }
         .user-info { min-width: 0; flex: 1; }
-        .user-name  { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-role  { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .7px; margin-top: 1px; }
+        .user-name  { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-role  { font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .6px; margin-top: 2px; }
         .logout-btn {
             width: 100%;
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 10px;
+            padding: 9px 10px;
             border: none;
             background: none;
-            color: rgba(255,255,255,.35);
-            font-size: 11px;
+            color: rgba(255,255,255,.4);
+            font-size: 13px;
             font-family: var(--font);
             cursor: pointer;
             border-radius: var(--radius);
