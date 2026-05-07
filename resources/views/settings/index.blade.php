@@ -10,7 +10,7 @@
         <div class="card-body">
             @if(!empty($settings['company_logo']))
                 <div style="margin-bottom:16px;">
-                    <img src="{{ asset('storage/' . $settings['company_logo']) }}"
+                    <img src="{{ route('settings.logo.image') }}"
                          alt="Company Logo"
                          style="max-height:80px;max-width:240px;object-fit:contain;display:block;border:1px solid var(--bdr);border-radius:var(--radius);padding:8px;background:var(--s2);">
                 </div>

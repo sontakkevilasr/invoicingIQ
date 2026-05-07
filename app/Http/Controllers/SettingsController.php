@@ -69,6 +69,20 @@ class SettingsController extends Controller
         return redirect()->route('settings.index')->with('success', 'Logo removed.');
     }
 
+    public function logoImage()
+    {
+        $path = Setting::get('company_logo');
+        if (!$path) abort(404);
+
+        $fullPath = storage_path('app/public/' . $path);
+        if (!file_exists($fullPath)) abort(404);
+
+        $ext  = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $mime = match ($ext) { 'png' => 'image/png', 'gif' => 'image/gif', default => 'image/jpeg' };
+
+        return response()->file($fullPath, ['Content-Type' => $mime, 'Cache-Control' => 'max-age=3600']);
+    }
+
     public static function logoBase64(array $settings): ?string
     {
         $logoPath = $settings['company_logo'] ?? '';

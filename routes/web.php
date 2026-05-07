@@ -66,6 +66,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
     });
 
+    // Logo image — served via PHP, no storage symlink required
+    Route::get('settings/logo/image', [SettingsController::class, 'logoImage'])->name('settings.logo.image');
+
     // ── Reports (all roles) ────────────────────────────────────
     Route::get('reports/gst', [GstReportController::class, 'index'])->name('reports.gst');
     Route::get('reports/gst/export', [GstReportController::class, 'export'])->name('reports.gst.export');
