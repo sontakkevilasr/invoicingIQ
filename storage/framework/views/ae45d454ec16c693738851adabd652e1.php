@@ -182,6 +182,11 @@
                 <div class="flash flash-error"><?php echo e(session('error')); ?></div>
             </div>
         <?php endif; ?>
+        <?php if(session('warning')): ?>
+            <div style="padding:0 28px;padding-top:16px;">
+                <div class="flash flash-warning"><?php echo e(session('warning')); ?></div>
+            </div>
+        <?php endif; ?>
 
         <?php echo $__env->yieldContent('content'); ?>
     </main>

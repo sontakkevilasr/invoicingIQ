@@ -182,6 +182,11 @@
                 <div class="flash flash-error">{{ session('error') }}</div>
             </div>
         @endif
+        @if(session('warning'))
+            <div style="padding:0 28px;padding-top:16px;">
+                <div class="flash flash-warning">{{ session('warning') }}</div>
+            </div>
+        @endif
 
         @yield('content')
     </main>

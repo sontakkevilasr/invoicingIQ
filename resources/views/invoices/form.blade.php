@@ -37,6 +37,12 @@
     @csrf
     @if($isEdit) @method('PUT') @endif
     <input type="hidden" name="visible_columns" id="visibleColsInput">
+    {{-- Email send fields (populated by modal) --}}
+    <input type="hidden" name="send_email"    id="sendEmailFlag"    value="0">
+    <input type="hidden" name="to_email"      id="h_to_email">
+    <input type="hidden" name="cc_email"      id="h_cc_email">
+    <input type="hidden" name="email_subject" id="h_email_subject">
+    <input type="hidden" name="email_body"    id="h_email_body">
 
     <div class="inv-paper">
 
@@ -96,6 +102,7 @@
             <input type="hidden" name="is_intra_state"           id="f_intra"      value="{{ old('is_intra_state', $isEdit ? ($invoice->is_intra_state ? '1' : '0') : '1') }}">
             <input type="hidden" name="place_of_supply"          id="f_pos"        value="{{ old('place_of_supply', $isEdit ? $invoice->place_of_supply        : '') }}">
             <input type="hidden" name="place_of_supply_code"     id="f_pos_code"   value="{{ old('place_of_supply_code', $isEdit ? $invoice->place_of_supply_code : '') }}">
+            <input type="hidden" id="f_cust_email" value="{{ $isEdit && $invoice->customer ? $invoice->customer->email : '' }}">
 
             {{-- Search box (shown when no customer) --}}
             <div id="custSearchWrap" style="{{ ($isEdit && $invoice->customer_name) ? 'display:none;' : '' }}position:relative;">
@@ -258,6 +265,9 @@
             <button type="button" onclick="submitInvoice('draft')" class="act-btn secondary">Save Draft</button>
             <button type="button" onclick="submitInvoice('paid')"  class="act-btn success">Mark as Paid</button>
             @if($isEdit)
+                @if(($s['email_enabled']??'0')==='1')
+                <button type="button" onclick="openSendOnlyModal()" class="act-btn secondary">✉ Send Email</button>
+                @endif
                 <a href="{{ route('invoices.pdf', $invoice) }}" class="act-btn secondary" target="_blank">Download PDF</a>
                 <button type="button" onclick="window.print()" class="act-btn secondary">Print</button>
                 <button type="button" onclick="document.getElementById('payModal').style.display='flex'" class="act-btn secondary">Record Payment</button>
@@ -335,6 +345,55 @@
         </form>
     </div>
 </div>
+@endif
+
+{{-- ═══ Email Compose Modal ══════════════════════════════════ --}}
+<div id="emailModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:640px;width:100%;">
+        <div class="modal-head">
+            <div class="modal-title">Send Invoice by Email</div>
+            <button type="button" class="modal-close" onclick="closeEmailModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">To <span class="req">*</span></label>
+                <input type="email" id="em_to" class="form-control" placeholder="customer@example.com"
+                       oninput="this.style.borderColor=''">
+                <div id="em_to_err" style="font-size:12px;color:var(--err);margin-top:3px;display:none;">Valid email required.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">CC <span style="font-size:11px;color:var(--t4);font-weight:400;">(optional)</span></label>
+                <input type="email" id="em_cc" class="form-control" placeholder="cc@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subject <span class="req">*</span></label>
+                <input type="text" id="em_subject" class="form-control">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Message</label>
+                <div id="emailBodyEditor"></div>
+            </div>
+            <div style="margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:var(--radius);font-size:11px;color:var(--t4);">
+                The invoice PDF will be attached as a compressed ZIP file.
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" onclick="closeEmailModal()">Cancel</button>
+            <button type="button" class="btn" id="emSaveOnlyBtn" onclick="saveWithoutEmail()" style="display:none;">Finalise Only</button>
+            <button type="button" class="btn btn-primary" onclick="doSendEmail()">✉ Send Invoice</button>
+        </div>
+    </div>
+</div>
+
+{{-- Standalone send-email form (edit mode, no re-save) --}}
+@if($isEdit)
+<form id="emailSendForm" method="POST" action="{{ route('invoices.email', $invoice) }}" style="display:none;">
+    @csrf
+    <input type="hidden" name="to_email"      id="es_to_email">
+    <input type="hidden" name="cc_email"       id="es_cc_email">
+    <input type="hidden" name="email_subject"  id="es_subject">
+    <input type="hidden" name="email_body"     id="es_body">
+</form>
 @endif
 
 {{-- ═══ Quick Add Item Modal ════════════════════════════════ --}}
@@ -494,10 +553,22 @@
 </div>
 
 @push('styles')
-<style>.hidden-col { display: none !important; }</style>
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<style>
+.hidden-col { display: none !important; }
+#emailBodyEditor .ql-editor { min-height:160px; font-size:13px; font-family:var(--font); line-height:1.6; }
+#emailBodyEditor .ql-toolbar.ql-snow { border-radius:var(--radius) var(--radius) 0 0; border-color:var(--bdr2); background:var(--s2); }
+#emailBodyEditor .ql-container.ql-snow { border-color:var(--bdr2); border-radius:0 0 var(--radius) var(--radius); }
+#emailBodyEditor .ql-toolbar.ql-snow button,
+#emailBodyEditor .ql-toolbar.ql-snow .ql-picker-label { color:var(--t2); }
+#emailBodyEditor .ql-toolbar.ql-snow button:hover,
+#emailBodyEditor .ql-toolbar.ql-snow .ql-picker-label:hover,
+#emailBodyEditor .ql-toolbar.ql-snow button.ql-active { color:var(--accent); }
+</style>
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.js"></script>
 <script>
 const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
 const MY_SC   = '{{ $s["company_state_code"] ?? "27" }}';
@@ -677,6 +748,7 @@ function pickCustomer(enc) {
     document.getElementById('f_cust_id').value    = c.id;
     document.getElementById('f_cust_name').value  = c.name;
     document.getElementById('f_cust_gstin').value = c.gstin||'';
+    document.getElementById('f_cust_email').value = c.email||'';
     document.getElementById('f_cust_addr').value  = c.billing_address||'';
     document.getElementById('f_cust_city').value  = c.billing_city||'';
     document.getElementById('f_cust_state').value = c.billing_state||'';
@@ -693,7 +765,7 @@ function pickCustomer(enc) {
     updateGstTag(); recalc();
 }
 function clearCustomer() {
-    ['f_cust_id','f_cust_name','f_cust_gstin','f_cust_addr','f_cust_city','f_cust_state','f_cust_sc'].forEach(id => document.getElementById(id).value='');
+    ['f_cust_id','f_cust_name','f_cust_gstin','f_cust_addr','f_cust_city','f_cust_state','f_cust_sc','f_cust_email'].forEach(id => document.getElementById(id).value='');
     document.getElementById('custSearchInput').value = '';
     document.getElementById('custSearchWrap').style.display = 'block';
     document.getElementById('custFilled').style.display     = 'none';
@@ -914,11 +986,123 @@ async function saveQuickCust() {
 
 /* ── Misc helpers ── */
 function setStatus(v) { document.querySelector('[name="status"]').value=v; }
+
+/* ── Email modal ── */
+const EMAIL_ENABLED = {{ ($s['email_enabled']??'0')==='1' ? 'true' : 'false' }};
+const EMAIL_SUBJECT = @json($s['email_subject'] ?? 'Invoice {invoice_number} from {company_name}');
+const EMAIL_BODY    = @json($s['email_body'] ?? '<p>Dear {customer_name},</p><p>Please find attached <strong>Invoice {invoice_number}</strong> from <strong>{company_name}</strong>.</p><p><strong>Amount:</strong> {amount}<br><strong>Due Date:</strong> {due_date}</p><p>The invoice PDF is included as a compressed attachment.</p><p>Regards,<br>{company_name}</p>');
+const COMPANY_NAME  = @json($s['company_name'] ?? '');
+
+let _emailMode = null; // 'send_and_save' | 'send_only'
+
+const emailQuill = new Quill('#emailBodyEditor', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean'],
+        ],
+    },
+});
+
+function _fillEmailPlaceholders(str) {
+    const custName = document.getElementById('f_cust_name').value || '';
+    const invNum   = document.getElementById('invNumber').value   || '';
+    const dueDate  = document.querySelector('[name="due_date"]').value || '';
+    const amount   = document.getElementById('s_grand').textContent || '';
+    return str
+        .replace(/{customer_name}/g, custName)
+        .replace(/{invoice_number}/g, invNum)
+        .replace(/{company_name}/g, COMPANY_NAME)
+        .replace(/{amount}/g, amount)
+        .replace(/{due_date}/g, dueDate);
+}
+
+function openEmailModal(status) {
+    _emailMode = 'send_and_save';
+    document.getElementById('emSaveOnlyBtn').style.display = '';
+    _pendingStatus = status;
+    document.getElementById('em_to').value      = document.getElementById('f_cust_email').value || '';
+    document.getElementById('em_cc').value      = '';
+    document.getElementById('em_subject').value = _fillEmailPlaceholders(EMAIL_SUBJECT);
+    emailQuill.clipboard.dangerouslyPasteHTML(_fillEmailPlaceholders(EMAIL_BODY));
+    document.getElementById('em_to_err').style.display = 'none';
+    document.getElementById('emailModal').style.display = 'flex';
+}
+
+function openSendOnlyModal() {
+    _emailMode = 'send_only';
+    document.getElementById('emSaveOnlyBtn').style.display = 'none';
+    document.getElementById('em_to').value      = document.getElementById('f_cust_email').value || '';
+    document.getElementById('em_cc').value      = '';
+    document.getElementById('em_subject').value = _fillEmailPlaceholders(EMAIL_SUBJECT);
+    emailQuill.clipboard.dangerouslyPasteHTML(_fillEmailPlaceholders(EMAIL_BODY));
+    document.getElementById('em_to_err').style.display = 'none';
+    document.getElementById('emailModal').style.display = 'flex';
+}
+
+function closeEmailModal() {
+    document.getElementById('emailModal').style.display = 'none';
+    _emailMode = null;
+}
+
+function saveWithoutEmail() {
+    document.getElementById('sendEmailFlag').value = '0';
+    setStatus(_pendingStatus || 'sent');
+    syncVisColInput();
+    closeEmailModal();
+    document.getElementById('invoiceForm').requestSubmit();
+}
+
+function doSendEmail() {
+    const to = document.getElementById('em_to').value.trim();
+    if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+        document.getElementById('em_to_err').style.display = '';
+        document.getElementById('em_to').focus();
+        return;
+    }
+    const subject = document.getElementById('em_subject').value.trim();
+    const body    = emailQuill.root.innerHTML;
+    const cc      = document.getElementById('em_cc').value.trim();
+
+    if (_emailMode === 'send_only') {
+        document.getElementById('es_to_email').value = to;
+        document.getElementById('es_cc_email').value = cc;
+        document.getElementById('es_subject').value  = subject;
+        document.getElementById('es_body').value     = body;
+        closeEmailModal();
+        document.getElementById('emailSendForm').submit();
+    } else {
+        document.getElementById('h_to_email').value      = to;
+        document.getElementById('h_cc_email').value      = cc;
+        document.getElementById('h_email_subject').value = subject;
+        document.getElementById('h_email_body').value    = body;
+        document.getElementById('sendEmailFlag').value   = '1';
+        setStatus(_pendingStatus || 'sent');
+        syncVisColInput();
+        closeEmailModal();
+        document.getElementById('invoiceForm').requestSubmit();
+    }
+}
+
+let _pendingStatus = null;
 function submitInvoice(status) {
+    if (status === 'sent' && EMAIL_ENABLED) {
+        openEmailModal(status);
+        return;
+    }
     setStatus(status);
     syncVisColInput();
     document.getElementById('invoiceForm').requestSubmit();
 }
+
+// Close email modal on backdrop click
+document.addEventListener('click', e => {
+    const modal = document.getElementById('emailModal');
+    if (e.target === modal) closeEmailModal();
+});
 function setText(id,v) { const e=document.getElementById(id); if(e) e.textContent=v; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function debounce(fn,ms){ let t; return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}; }

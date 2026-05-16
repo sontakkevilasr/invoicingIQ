@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 
 class SettingsController extends Controller
 {
@@ -34,7 +36,24 @@ class SettingsController extends Controller
             'invoice_seq'     => 'required|integer|min:1',
             'default_terms'   => 'nullable|integer|min:0',
             'default_notes'   => 'nullable|string',
+            'smtp_host'       => 'nullable|string|max:255',
+            'smtp_port'       => 'nullable|integer|min:1|max:65535',
+            'smtp_username'   => 'nullable|string|max:255',
+            'smtp_password'   => 'nullable|string|max:255',
+            'smtp_encryption' => 'nullable|in:tls,ssl,none',
+            'smtp_from_name'  => 'nullable|string|max:255',
+            'smtp_from_email' => 'nullable|email',
+            'email_subject'   => 'nullable|string|max:500',
+            'email_body'      => 'nullable|string',
         ]);
+
+        // Checkbox — absent when unchecked
+        $data['email_enabled'] = $request->has('email_enabled') ? '1' : '0';
+
+        // Never overwrite stored password with blank (user left field empty)
+        if (empty($data['smtp_password'])) {
+            unset($data['smtp_password']);
+        }
 
         foreach ($data as $key => $value) {
             Setting::set($key, $value);
@@ -81,6 +100,53 @@ class SettingsController extends Controller
         $mime = match ($ext) { 'png' => 'image/png', 'gif' => 'image/gif', default => 'image/jpeg' };
 
         return response()->file($fullPath, ['Content-Type' => $mime, 'Cache-Control' => 'max-age=3600']);
+    }
+
+    public function testEmail(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $host       = trim($request->input('smtp_host', ''));
+        $port       = (int) ($request->input('smtp_port', 587));
+        $username   = $request->input('smtp_username', '');
+        $password   = $request->input('smtp_password', '');
+        $encryption = $request->input('smtp_encryption', 'tls');
+        $fromEmail  = trim($request->input('smtp_from_email', ''));
+        $fromName   = $request->input('smtp_from_name', 'InvoiceIQ');
+
+        if (empty($password)) {
+            $password = Setting::get('smtp_password') ?? '';
+        }
+
+        if (!$host) {
+            return response()->json(['ok' => false, 'message' => 'SMTP host is required.']);
+        }
+        if (!$fromEmail) {
+            return response()->json(['ok' => false, 'message' => 'From email address is required.']);
+        }
+
+        try {
+            $useSsl    = $encryption === 'ssl';
+            $transport = new EsmtpTransport($host, $port, $useSsl);
+            if ($username !== '') $transport->setUsername($username);
+            if ($password !== '') $transport->setPassword($password);
+
+            $mailer = new \Illuminate\Mail\Mailer('smtp', app('view'), $transport, app('events'));
+            $mailer->alwaysFrom($fromEmail, $fromName);
+
+            $mailable = new class($fromName) extends Mailable {
+                public function __construct(private string $senderName) {}
+                public function build(): static {
+                    return $this
+                        ->subject('InvoiceIQ — SMTP Test Email')
+                        ->html('<p style="font-family:sans-serif;font-size:15px;">This is a test email from <strong>' . e($this->senderName) . '</strong> via InvoiceIQ.<br>Your SMTP settings are working correctly.</p>');
+                }
+            };
+
+            $mailer->to($fromEmail)->send($mailable);
+
+            return response()->json(['ok' => true, 'message' => "Test email sent to {$fromEmail} successfully."]);
+        } catch (\Exception $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public static function logoBase64(array $settings): ?string

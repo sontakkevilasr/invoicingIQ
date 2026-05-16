@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Customer;
@@ -9,6 +10,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 
 class InvoiceController extends Controller
 {
@@ -64,13 +66,20 @@ class InvoiceController extends Controller
             Invoice::nextNumber();
         }
 
-        DB::transaction(function () use ($request) {
+        $invoice = null;
+        DB::transaction(function () use ($request, &$invoice) {
             $invoice = Invoice::create($this->invoiceData($request));
             $this->syncItems($invoice, $request->rows ?? []);
             $this->recalculate($invoice);
         });
+        assert($invoice instanceof Invoice);
 
         Cache::forget('dashboard.stats');
+
+        if ($request->boolean('send_email')) {
+            return $this->handleEmailSend($request, $invoice, 'Invoice created and emailed to');
+        }
+
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
     }
 
@@ -101,6 +110,11 @@ class InvoiceController extends Controller
         });
 
         Cache::forget('dashboard.stats');
+
+        if ($request->boolean('send_email')) {
+            return $this->handleEmailSend($request, $invoice, 'Invoice updated and emailed to');
+        }
+
         return redirect()->route('invoices.index')->with('success', 'Invoice updated.');
     }
 
@@ -139,6 +153,33 @@ class InvoiceController extends Controller
         return back()->with('success', 'Payment recorded.');
     }
 
+    public function sendEmail(Request $request, Invoice $invoice)
+    {
+        $data = $request->validate([
+            'to_email'      => 'required|email',
+            'cc_email'      => 'nullable|email',
+            'email_subject' => 'required|string|max:500',
+            'email_body'    => 'required|string',
+        ]);
+
+        $settings = \App\Models\Setting::all_settings();
+
+        if (($settings['email_enabled'] ?? '0') !== '1') {
+            return back()->with('error', 'Email sending is disabled. Enable it in Settings → Email.');
+        }
+
+        try {
+            $this->dispatchMail($invoice, $data, $settings);
+            if ($invoice->status === 'draft') {
+                $invoice->update(['status' => 'sent']);
+                Cache::forget('dashboard.stats');
+            }
+            return back()->with('success', "Invoice emailed to {$data['to_email']} successfully.");
+        } catch (\Exception $e) {
+            return back()->with('error', 'Email failed: ' . $e->getMessage());
+        }
+    }
+
     public function pdf(Invoice $invoice)
     {
         $invoice->load('items', 'payments');
@@ -147,6 +188,77 @@ class InvoiceController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('invoice', 'settings', 'logoBase64'))
             ->setPaper('a4', 'portrait');
         return $pdf->download("Invoice-{$invoice->number}.pdf");
+    }
+
+    // ─── Email Helpers ────────────────────────────────────────
+
+    private function handleEmailSend(Request $request, Invoice $invoice, string $successPrefix): \Illuminate\Http\RedirectResponse
+    {
+        $settings = \App\Models\Setting::all_settings();
+
+        if (($settings['email_enabled'] ?? '0') !== '1') {
+            return redirect()->route('invoices.index')
+                ->with('warning', 'Invoice saved. Email sending is disabled — enable it in Settings → Email.');
+        }
+
+        $to = $request->input('to_email', '');
+        if (!$to) {
+            return redirect()->route('invoices.index')
+                ->with('warning', 'Invoice saved. No recipient email address provided.');
+        }
+
+        try {
+            $this->dispatchMail($invoice, [
+                'to_email'      => $to,
+                'cc_email'      => $request->input('cc_email'),
+                'email_subject' => $request->input('email_subject', "Invoice {$invoice->number}"),
+                'email_body'    => $request->input('email_body', ''),
+            ], $settings);
+            return redirect()->route('invoices.index')
+                ->with('success', "{$successPrefix} {$to}.");
+        } catch (\Exception $e) {
+            return redirect()->route('invoices.index')
+                ->with('warning', "Invoice saved, but email failed: {$e->getMessage()}");
+        }
+    }
+
+    private function dispatchMail(Invoice $invoice, array $data, array $settings): void
+    {
+        $host      = trim($settings['smtp_host'] ?? '');
+        $port      = (int) ($settings['smtp_port'] ?? 587);
+        $username  = $settings['smtp_username'] ?? '';
+        $password  = $settings['smtp_password'] ?? '';
+        $encryption = $settings['smtp_encryption'] ?? 'tls';
+        $fromEmail = trim($settings['smtp_from_email'] ?? ($settings['company_email'] ?? ''));
+        $fromName  = $settings['smtp_from_name'] ?? ($settings['company_name'] ?? 'InvoiceIQ');
+
+        if (!$host) {
+            throw new \RuntimeException('SMTP host is not configured. Go to Settings → Email and fill in the SMTP details.');
+        }
+        if (!$fromEmail) {
+            throw new \RuntimeException('From email address is not configured. Go to Settings → Email and set the From Email.');
+        }
+
+        // Build transport directly — bypasses any cached laravel mailer instance
+        $useSsl    = $encryption === 'ssl';
+        $transport = new EsmtpTransport($host, $port, $useSsl);
+        if ($username !== '') $transport->setUsername($username);
+        if ($password !== '') $transport->setPassword($password);
+
+        $mailer = new \Illuminate\Mail\Mailer(
+            'smtp',
+            app('view'),
+            $transport,
+            app('events')
+        );
+        $mailer->alwaysFrom($fromEmail, $fromName);
+
+        $mailable = new InvoiceMail($invoice, $data['email_subject'], $data['email_body']);
+        $send = $mailer->to($data['to_email']);
+        if (!empty($data['cc_email'])) {
+            $send = $send->cc($data['cc_email']);
+        }
+        $send->send($mailable);
     }
 
     // ─── Helpers ─────────────────────────────────────────────

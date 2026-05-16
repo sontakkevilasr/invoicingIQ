@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
         Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.status');
         Route::post('invoices/{invoice}/payment', [InvoiceController::class, 'recordPayment'])->name('invoices.payment');
+        Route::post('invoices/{invoice}/email', [InvoiceController::class, 'sendEmail'])->name('invoices.email');
     });
 
     // ── Customers ──────────────────────────────────────────────
@@ -79,6 +80,7 @@ Route::middleware('auth')->group(function () {
         Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::post('settings/logo', [SettingsController::class, 'uploadLogo'])->name('settings.logo.upload');
         Route::delete('settings/logo', [SettingsController::class, 'removeLogo'])->name('settings.logo.remove');
+        Route::post('settings/test-email', [SettingsController::class, 'testEmail'])->name('settings.test-email');
 
         Route::resource('users', UsersController::class)->except(['show', 'create', 'edit']);
     });
